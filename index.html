@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Architect: Rogue Capitalist</title>
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: #131c2e;
+            --text-main: #f1f5f9;
+            --text-muted: #64748b;
+            --primary: #10b981;
+            --primary-hover: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --accent: #3b82f6;
+            --prestige: #a855f7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 950px;
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+            border: 1px solid #1e293b;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 14px;
+            font-weight: bold;
+            background-color: #1e293b;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+
+        .badge.legacy {
+            border-color: var(--prestige);
+            color: #c084fc;
+        }
+
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: #0b0f19;
+            padding: 14px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .stat-card.financial { border-left-color: var(--primary); }
+        .stat-card.stash-zone { border-left-color: var(--prestige); }
+        .stat-card.risk { border-left-color: var(--warning); }
+        .stat-card.danger-zone { border-left-color: var(--danger); }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .meter-container {
+            margin-top: 8px;
+            background-color: #1e293b;
+            border-radius: 4px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .suspicion-fill { background-color: var(--warning); }
+        .heat-fill { background-color: var(--danger); }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background-color: #162238;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            transition: background 0.2s, transform 0.1s;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover:not(:disabled) {
+            filter: brightness(1.1);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.99);
+        }
+
+        .btn:disabled {
+            background-color: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-primary { background-color: var(--primary); }
+        .btn-secondary-action { background-color: #475569; border: 1px solid #64748b; }
+        .btn-warning { background-color: var(--warning); color: #090d16; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-prestige { background-color: var(--prestige); }
+
+        .btn-subtext {
+            font-size: 11px;
+            font-weight: normal;
+            opacity: 0.9;
+        }
+
+        .input-inline-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .input-inline-group input {
+            flex: 1;
+            background-color: #0b0f19;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+        .input-inline-group button {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .log-box {
+            background-color: #070a12;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 12px;
+            height: 250px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            color: #34d399;
+            margin-bottom: 14px;
+        }
+
+        .log-entry {
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+
+        .log-time { color: #64748b; }
+        .log-alert { color: var(--danger); font-weight: bold; }
+        .log-warn { color: var(--warning); }
+        .log-success { color: #10b981; }
+
+        /* Save Management Interface */
+        .sync-container {
+            background-color: #0b0f19;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sync-input {
+            width: 100%;
+            background-color: #131c2e;
+            border: 1px solid #334155;
+            color: #34d399;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 6px;
+            border-radius: 4px;
+            resize: none;
+        }
+
+        .sync-btn-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .sync-btn-row button {
+            flex: 1;
+            padding: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: white;
+        }
+
+        .sync-btn-row button:hover {
+            background-color: #334155;
+        }
+
+        /* Overlay Screens */
+        .screen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(9, 13, 22, 0.97);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .screen-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 580px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-title {
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-title.win { color: var(--prestige); }
+        .modal-title.lose { color: var(--danger); }
+
+        .modal-body {
+            color: #94a3b8;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        /* Upgrades Market Layout */
+        .upgrades-market {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 16px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .upgrade-item {
+            background-color: #0b0f19;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+        }
+
+        .upgrade-info h4 {
+            color: #c084fc;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .upgrade-info p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .system-btn-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn-system {
+            background: transparent;
+            border: 1px solid #334155;
+            color: var(--text-muted);
+            padding: 6px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .btn-system:hover {
+            color: white;
+            border-color: #475569;
+        }
+        
+        .modal-btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <header>
+            <div>
+                <h1>The Architect</h1>
+                <p style="font-size: 12px; color: var(--text-muted)">Cross-Border System Replication</p>
+            </div>
+            <div class="header-meta">
+                <div class="badge legacy" id="stat-jurisdictions">Jurisdictions Hit: 0</div>
+                <div class="badge" id="stat-days">Cycle: 0</div>
+            </div>
+        </header>
+
+        <div class="grid-stats">
+            <div class="stat-card financial">
+                <div class="stat-label">Local Liquidity</div>
+                <div class="stat-value" id="stat-cash">$150</div>
+            </div>
+            <div class="stat-card financial">
+                <div class="stat-label">Book Liabilities</div>
+                <div class="stat-value" id="stat-liabilities">$0</div>
+            </div>
+            <div class="stat-card stash-zone">
+                <div class="stat-label">Offshore Wealth</div>
+                <div class="stat-value" id="stat-stash" style="color: #c084fc;">$0</div>
+            </div>
+            <div class="stat-card risk">
+                <div class="stat-label">Public Suspicion</div>
+                <div class="stat-value" id="stat-suspicion-text">0%</div>
+                <div class="meter-container">
+                    <div class="meter-fill suspicion-fill" id="meter-suspicion"></div>
+                </div>
+            </div>
+            <div class="stat-card danger-zone">
+                <div class="stat-label">Regulatory Heat</div>
+                <div class="stat-value" id="stat-heat-text">0%</div>
+                <div class="meter-container">
+                    <div class="meter-fill heat-fill" id="meter-heat"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="panel">
+                <div class="panel-title">Operations Management</div>
+                <button class="btn btn-primary" onclick="game.advanceCycle(true)">
+                    <span>Aggressive Expansion</span>
+                    <span class="btn-subtext">Find Investors (+1 Sus per node)</span>
+                </button>
+
+                <button class="btn btn-secondary-action" onclick="game.advanceCycle(false)">
+                    <span>Sit Back & Collect</span>
+                    <span class="btn-subtext">Harvest Pool Capital safely</span>
+                </button>
+
+                <button class="btn btn-warning" id="btn-campaign" onclick="game.runCampaign()">
+                    <span>Run Confidence Campaign</span>
+                    <span class="btn-subtext" id="sub-campaign-cost">Cost: $400</span>
+                </button>
+
+                <button class="btn btn-danger" id="btn-bribe" onclick="game.payBribe()">
+                    <span>Bribe Officials</span>
+                    <span class="btn-subtext" id="sub-bribe-cost">Cost: $2,500</span>
+                </button>
+
+                <div class="panel-title" style="margin-top: 10px;">Asset Allocation</div>
+                <div class="input-inline-group">
+                    <input type="number" id="input-stash-amount" placeholder="Amount to skim" min="1">
+                    <button class="btn" style="margin: 0;" onclick="game.stashFunds()">Skim to Offshore</button>
+                </div>
+                <div class="input-inline-group">
+                    <input type="number" id="input-inject-amount" placeholder="Amount to deploy" min="1">
+                    <button class="btn btn-prestige" style="margin: 0;" onclick="game.injectFunds()">Inject Offshore Cash</button>
+                </div>
+
+                <button class="btn btn-prestige" id="btn-flee" style="margin-top: auto; margin-bottom: 0;" onclick="game.attemptEscape()">
+                    <span>Flee Jurisdiction</span>
+                    <span class="btn-subtext" id="sub-flee-cost">Requires $150 cash to cross borders</span>
+                </button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">System Log / Ledger</div>
+                <div class="log-box" id="log-box"></div>
+
+                <div class="panel-title">Data Stream Sync (Base64)</div>
+                <div class="sync-container">
+                    <textarea class="sync-input" id="sync-string" rows="2" placeholder="Network string data appears here..."></textarea>
+                    <div class="sync-btn-row">
+                        <button onclick="game.exportProfile()">Generate Export Code</button>
+                        <button onclick="game.importProfile()">Load / Import Code</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="system-btn-group">
+            <button class="btn-system" onclick="game.reset()">Wipe Profile / Hard Reset</button>
+        </div>
+    </div>
+
+    <div class="screen-overlay" id="end-screen">
+        <div class="modal-content">
+            <div class="modal-title" id="end-title">System Shift</div>
+            <div class="modal-body" id="end-body">Transfer details appear here...</div>
+            
+            <div id="market-container" style="display: none;">
+                <div class="panel-title" style="text-align: left;">Available Shell Network Upgrades</div>
+                <div class="upgrades-market" id="upgrades-list">
+                    </div>
+            </div>
+
+            <div class="modal-btn-container" id="modal-buttons-zone">
+                <button class="btn btn-primary" id="end-btn" style="text-align: center; margin: 0 auto; display: block;" onclick="game.nextJurisdiction()">Deploy Next Infrastructure</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PersistentPonziEngine {
+            constructor() {
+                this.defaultState = {
+                    cash: 150,
+                    stash: 0,
+                    stashAtStartOfRun: 0,
+                    investors: 1,
+                    liabilities: 0,
+                    suspicion: 0, 
+                    heat: 0,
+                    days: 0,
+                    campaignCost: 400,
+                    bribeCost: 2500,
+                    jurisdictions: 0,
+                    heatMultiplier: 1.0, 
+                    upgrades: {
+                        slowHeat: 0,       
+                        slowPublic: 0,     
+                        confidence: 0,     
+                        publicImage: 0,
+                        fleeDiscount: 0,
+                        sitBackShield: 0,
+                        bailoutDiscount: 0,
+                        liabilityShield: 0 
+                    },
+                    logHistory: [{type: 'system', text: 'New architecture initiated. Baseline starting constraints apply.'}]
+                };
+                
+                this.state = {};
+                this.loadFromCookies();
+            }
+
+            loadFromCookies() {
+                const saved = localStorage.getItem('architect_rogue_v2_state');
+                if (saved) {
+                    try {
+                        this.state = JSON.parse(saved);
+                        this.verifyStateIntegrity();
+                    } catch (e) {
+                        this.state = { ...this.defaultState };
+                    }
+                } else {
+                    this.state = { ...this.defaultState };
+                }
+                this.updateUI();
+                this.renderFullLog();
+            }
+
+            verifyStateIntegrity() {
+                if (!this.state.upgrades) {
+                    this.state.upgrades = { slowHeat: 0, slowPublic: 0, confidence: 0, publicImage: 0, fleeDiscount: 0, sitBackShield: 0, bailoutDiscount: 0, liabilityShield: 0 };
+                }
+                if (this.state.upgrades.fleeDiscount === undefined) this.state.upgrades.fleeDiscount = 0;
+                if (this.state.upgrades.sitBackShield === undefined) this.state.upgrades.sitBackShield = 0;
+                if (this.state.upgrades.bailoutDiscount === undefined) this.state.upgrades.bailoutDiscount = 0;
+                if (this.state.upgrades.liabilityShield === undefined) this.state.upgrades.liabilityShield = 0;
+                if (this.state.heatMultiplier === undefined) this.state.heatMultiplier = 1.0;
+                if (this.state.stashAtStartOfRun === undefined) this.state.stashAtStartOfRun = this.state.stash || 0;
+                if (!this.state.logHistory) this.state.logHistory = [];
+            }
+
+            saveToCookies() {
+                localStorage.setItem('architect_rogue_v2_state', JSON.stringify(this.state));
+            }
+
+            reset() {
+                localStorage.removeItem('architect_rogue_v2_state');
+                this.state = JSON.parse(JSON.stringify(this.defaultState));
+                document.getElementById('end-screen').classList.remove('active');
+                document.getElementById('sync-string').value = '';
+                this.updateUI();
+                const logBox = document.getElementById('log-box');
+                logBox.innerHTML = '';
+                this.log('system', 'Database cleared. Profile reset to factory settings.');
+                this.saveToCookies();
+            }
+
+            log(type, text) {
+                const logBox = document.getElementById('log-box');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                
+                let prefix = '[INFO]';
+                if (type === 'alert') prefix = '<span class="log-alert">[CRITICAL]</span>';
+                if (type === 'warn') prefix = '<span class="log-warn">[RISK]</span>';
+                if (type === 'system') prefix = '<span class="log-time">[SYSTEM]</span>';
+                if (type === 'success') prefix = '<span class="log-success">[SUCCESS]</span>';
+
+                entry.innerHTML = `${prefix} ${text}`;
+                logBox.appendChild(entry);
+                logBox.scrollTop = logBox.scrollHeight;
+
+                this.state.logHistory.push({type, text});
+                if (this.state.logHistory.length > 40) this.state.logHistory.shift();
+            }
+
+            renderFullLog() {
+                const logBox = document.getElementById('log-box');
+                logBox.innerHTML = '';
+                this.state.logHistory.forEach(item => {
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry';
+                    let prefix = '[INFO]';
+                    if (item.type === 'alert') prefix = '<span class="log-alert">[CRITICAL]</span>';
+                    if (item.type === 'warn') prefix = '<span class="log-warn">[RISK]</span>';
+                    if (item.type === 'system') prefix = '<span class="log-time">[SYSTEM]</span>';
+                    if (item.type === 'success') prefix = '<span class="log-success">[SUCCESS]</span>';
+                    entry.innerHTML = `${prefix} ${item.text}`;
+                    logBox.appendChild(entry);
+                });
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+
+            getEscapeCost() {
+                const upgradeModifier = 1 - (this.state.upgrades.fleeDiscount * 0.05); 
+                const skimmedThisRun = Math.max(0, this.state.stash - this.state.stashAtStartOfRun);
+                const variableImpact = skimmedThisRun * 0.5;
+                const totalCost = Math.max(150, (150 + variableImpact) * Math.max(0.1, upgradeModifier));
+                return Math.floor(totalCost);
+            }
+
+            getBailoutCost() {
+                const reduction = this.state.upgrades.bailoutDiscount * 0.05;
+                const multiplier = Math.max(0.10, 1.0 - reduction);
+                return Math.floor(this.state.liabilities * multiplier);
+            }
+
+            updateUI() {
+                document.getElementById('stat-cash').innerText = `$${this.state.cash.toLocaleString()}`;
+                document.getElementById('stat-liabilities').innerText = `$${this.state.liabilities.toLocaleString()}`;
+                document.getElementById('stat-stash').innerText = `$${this.state.stash.toLocaleString()}`;
+                document.getElementById('stat-suspicion-text').innerText = `${Math.floor(this.state.suspicion)}%`;
+                document.getElementById('stat-heat-text').innerText = `${Math.floor(this.state.heat)}%`;
+                document.getElementById('stat-days').innerText = this.state.days;
+                document.getElementById('stat-jurisdictions').innerText = `Jurisdictions Evaded: ${this.state.jurisdictions}`;
+
+                document.getElementById('meter-suspicion').style.width = `${this.state.suspicion}%`;
+                document.getElementById('meter-heat').style.width = `${this.state.heat}%`;
+
+                document.getElementById('sub-campaign-cost').innerText = `Cost: $${this.state.campaignCost.toLocaleString()}`;
+                document.getElementById('sub-bribe-cost').innerText = `Cost: $${this.state.bribeCost.toLocaleString()}`;
+                
+                const currentEscapeCost = this.getEscapeCost();
+                document.getElementById('sub-flee-cost').innerText = `Requires $${currentEscapeCost.toLocaleString()} liquid cash on hand`;
+
+                document.getElementById('btn-campaign').disabled = (this.state.cash < this.state.campaignCost);
+                document.getElementById('btn-bribe').disabled = (this.state.cash < this.state.bribeCost);
+            }
+
+            advanceCycle(activeExpand = true) {
+                this.state.days += 10;
+                
+                let newInvestors = 0;
+                if (activeExpand) {
+                    const baselineScaling = 0.15;
+                    const dynamicUpgradeBoost = (this.state.upgrades.publicImage * 0.01) * this.state.investors;
+                    const combinedScalingFactor = baselineScaling + dynamicUpgradeBoost;
+
+                    if (this.state.investors <= 3) {
+                        newInvestors = Math.random() < (0.50 + dynamicUpgradeBoost) ? 1 : 0;
+                    } else {
+                        newInvestors = Math.floor(this.state.investors * combinedScalingFactor);
+                        if (newInvestors < 1) newInvestors = 1;
+                    }
+                }
+
+                const cashPerInvestor = 250 + (this.state.upgrades.confidence * 125);
+                const activePayingNetwork = this.state.investors + newInvestors;
+                const cashInjected = activePayingNetwork * cashPerInvestor;
+                
+                this.state.investors += newInvestors;
+                this.state.cash += cashInjected;
+                
+                let liabilityGrowthModifier = 1.0 - (this.state.upgrades.liabilityShield * 0.05);
+                if (liabilityGrowthModifier < 0.20) liabilityGrowthModifier = 0.20; 
+
+                const periodicInterest = (this.state.liabilities * 0.12) * liabilityGrowthModifier;
+                const freshPrincipalLiabilities = (cashInjected * 1.40) * liabilityGrowthModifier;
+                this.state.liabilities = Math.floor(this.state.liabilities + periodicInterest + freshPrincipalLiabilities);
+
+                let simulatedInvestors = activeExpand ? newInvestors : Math.max(1, Math.floor(this.state.investors * 0.15));
+                if (simulatedInvestors < 1) simulatedInvestors = 1;
+
+                let publicGained = simulatedInvestors * 1.0;
+                const mediaUpgradeModifier = Math.pow(0.92, this.state.upgrades.slowPublic);
+                publicGained *= mediaUpgradeModifier;
+
+                let heatGained = simulatedInvestors * 1.0;
+                const federalShieldsModifier = Math.pow(0.92, this.state.upgrades.slowHeat);
+                heatGained *= federalShieldsModifier * this.state.heatMultiplier;
+
+                if (activeExpand) {
+                    if (newInvestors > 0) {
+                        this.state.suspicion = Math.min(100, this.state.suspicion + publicGained);
+                        this.state.heat = Math.min(100, this.state.heat + heatGained);
+                    } else {
+                        this.state.suspicion = Math.min(100, this.state.suspicion + 0.5);
+                        this.state.heat = Math.min(100, this.state.heat + (0.5 * this.state.heatMultiplier));
+                    }
+                    this.log('system', `Aggressive Expansion: ${activePayingNetwork} active pools processed. Income: +$${cashInjected.toLocaleString()}. (Recruited: +${newInvestors} nodes).`);
+                } else {
+                    let sitBackFactor = 0.50;
+                    sitBackFactor -= (this.state.upgrades.sitBackShield * 0.05);
+                    if (sitBackFactor < 0.05) sitBackFactor = 0.05;
+
+                    this.state.suspicion = Math.min(100, this.state.suspicion + (publicGained * sitBackFactor));
+                    this.state.heat = Math.min(100, this.state.heat + (heatGained * sitBackFactor));
+                    
+                    this.log('success', `Harvest Phase: Maintained current assets. Yield: +$${cashInjected.toLocaleString()}. Generated ${Math.floor(sitBackFactor * 100)}% suspicion velocity.`);
+                }
+
+                this.checkRiskStates();
+                this.saveToCookies();
+                this.updateUI();
+            }
+
+            runCampaign() {
+                if (this.state.cash < this.state.campaignCost) return;
+
+                this.state.cash -= this.state.campaignCost;
+                const reduction = 25 + Math.floor(Math.random() * 15);
+                this.state.suspicion = Math.max(0, this.state.suspicion - reduction);
+                
+                this.log('success', `Campaign Ran: Distributed false ledger assets. Public suspicion deflated by ${reduction}%.`);
+                this.state.campaignCost = Math.floor(this.state.campaignCost * 1.6);
+                
+                this.checkRiskStates(); 
+                this.saveToCookies();
+                this.updateUI();
+            }
+
+            payBribe() {
+                if (this.state.cash < this.state.bribeCost) return;
+
+                this.state.cash -= this.state.bribeCost;
+                const heatReduction = 20 + Math.floor(Math.random() * 15);
+                this.state.heat = Math.max(0, this.state.heat - heatReduction);
+
+                this.log('success', `Bribe Paid: Routed $${this.state.bribeCost.toLocaleString()} to enforcement staff. Tracking file shelved (-${heatReduction}% Regulatory Heat).`);
+                
+                this.state.bribeCost = Math.floor(this.state.bribeCost * 2.5);
+
+                this.saveToCookies();
+                this.updateUI();
+            }
+
+            stashFunds() {
+                const input = document.getElementById('input-stash-amount');
+                const amount = parseInt(input.value);
+
+                if (isNaN(amount) || amount <= 0 || amount > this.state.cash) {
+                    this.log('warn', 'Invalid asset tracking allocation parameters.');
+                    return;
+                }
+
+                this.state.cash -= amount;
+                this.state.stash += amount;
+                
+                const dragImpact = Math.min(30, (amount / (this.state.cash + amount)) * 65);
+                this.state.suspicion = Math.min(100, this.state.suspicion + dragImpact);
+
+                this.log('warn', `Offshore Diversion: Diverted $${amount.toLocaleString()} to hidden terminal. Flee requirement adjusted dynamically.`);
+                
+                input.value = '';
+                this.checkRiskStates();
+                this.saveToCookies();
+                this.updateUI();
+            }
+
+            injectFunds() {
+                const input = document.getElementById('input-inject-amount');
+                const amount = parseInt(input.value);
+
+                if (isNaN(amount) || amount <= 0 || amount > this.state.stash) {
+                    this.log('warn', 'Ineligible clean balance injection parameters.');
+                    return;
+                }
+
+                this.state.stash -= amount;
+                this.state.cash += amount;
+                this.state.suspicion = Math.max(0, this.state.suspicion - 10);
+
+                this.log('success', `Emergency Re-Injection: Remitted $${amount.toLocaleString()} back to domestic accounts to cover gaps.`);
+                
+                input.value = '';
+                this.checkRiskStates();
+                this.saveToCookies();
+                this.updateUI();
+            }
+
+            checkRiskStates() {
+                if (this.state.heat >= 100) {
+                    this.triggerTermination('arrest');
+                    return;
+                }
+
+                if (this.state.suspicion >= 100 && this.state.heatMultiplier !== 2.0) {
+                    this.state.heatMultiplier = 2.0;
+                    this.log('alert', 'PUBLIC BREAKOUT: Panic has breached mass media thresholds. The Feds have established tracking task forces! [FEDERAL HEAT GAINS DOUBLED]');
+                } 
+                else if (this.state.suspicion < 25 && this.state.heatMultiplier === 2.0) {
+                    this.state.heatMultiplier = 1.0;
+                    this.log('success', `CRISIS RESOLVED: Public suspicion dropped below 25%. Federal investigators have lost active traction. [FEDERAL HEAT GAINS NORMALIZED]`);
+                }
+            }
+
+            attemptEscape() {
+                const requiredCash = this.getEscapeCost();
+                if (this.state.cash < requiredCash) {
+                    this.log('warn', `Extraction Locked: Border asset verification requires minimum $${requiredCash.toLocaleString()} liquid cash on hand.`);
+                    return;
+                }
+
+                this.triggerTermination('transition');
+            }
+
+            triggerTermination(reason) {
+                const overlay = document.getElementById('end-screen');
+                const title = document.getElementById('end-title');
+                const body = document.getElementById('end-body');
+                const market = document.getElementById('market-container');
+                const buttonsZone = document.getElementById('modal-buttons-zone');
+
+                overlay.classList.add('active');
+                buttonsZone.innerHTML = ''; 
+
+                if (reason === 'transition') {
+                    title.className = "modal-title win";
+                    title.innerText = "Market Re-Location";
+                    
+                    const escapeFee = this.getEscapeCost();
+                    this.state.cash -= escapeFee; 
+                    this.state.jurisdictions += 1;
+
+                    body.innerHTML = `You shifted cross-border before international warrants locked your terminal profile. <br><br>
+                    <strong>Flee Cost Paid:</strong> $${escapeFee.toLocaleString()} (Deducted from local cash)<br>
+                    <strong>Available Account Capital (Offshore):</strong> $${this.state.stash.toLocaleString()}<br><br>
+                    Spend your stashed assets to secure network upgrades before launching the next system infrastructure layer:`;
+                    
+                    market.style.display = "block";
+                    this.renderUpgradesMarket();
+
+                    const nextBtn = document.createElement('button');
+                    nextBtn.className = "btn btn-primary";
+                    nextBtn.style.margin = "0 auto";
+                    nextBtn.innerText = "Deploy Next Infrastructure";
+                    nextBtn.onclick = () => this.nextJurisdiction();
+                    buttonsZone.appendChild(nextBtn);
+                } else {
+                    title.className = "modal-title lose";
+                    title.innerText = "Asset Forfeiture";
+                    market.style.display = "none";
+
+                    const bailoutCost = this.getBailoutCost();
+                    const canAffordBailout = this.state.stash >= bailoutCost;
+
+                    body.innerHTML = `The Department of Justice isolated your server routes. Your shell identities have been flagged for active interception.<br><br>
+                    <strong>Stolen Book Liabilities This Run:</strong> $${this.state.liabilities.toLocaleString()}<br>
+                    <strong>Required Offshore Bailout Amount:</strong> $${bailoutCost.toLocaleString()} <br>
+                    <strong>Your Current Offshore Wealth:</strong> $${this.state.stash.toLocaleString()}`;
+
+                    if (canAffordBailout) {
+                        body.innerHTML += `<br><br><span style="color: var(--primary); font-weight:bold;">[LEGAL INGRESS DETECTED]</span> You possess sufficient offshore resources to secure elite defense counsel and bribe federal tracking elements out of this indictment.`;
+                        
+                        const bribeBtn = document.createElement('button');
+                        bribeBtn.className = "btn btn-warning";
+                        bribeBtn.style.margin = "0 auto";
+                        bribeBtn.innerHTML = `<span>Deploy Offshore Bailout</span> <span class="btn-subtext">Pay $${bailoutCost.toLocaleString()}</span>`;
+                        bribeBtn.onclick = () => this.executeOffshoreBailout(bailoutCost);
+                        buttonsZone.appendChild(bribeBtn);
+                    }
+
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = "btn btn-danger";
+                    resetBtn.style.margin = "0 auto";
+                    resetBtn.innerText = "Accept Sentence / Wipe Profile";
+                    resetBtn.onclick = () => this.reset();
+                    buttonsZone.appendChild(resetBtn);
+                }
+            }
+
+            executeOffshoreBailout(cost) {
+                this.state.stash -= cost;
+                this.state.heat = 0; 
+                this.state.cash = 0; 
+                
+                document.getElementById('end-screen').classList.remove('active');
+                
+                this.updateUI();
+                this.log('success', `OFFSHORE BAILOUT EXECUTED: Remitted $${cost.toLocaleString()} to legal agencies and corrupt staff. Federal indictment dropped. Local cash accounts seized.`);
+                this.saveToCookies();
+            }
+
+            renderUpgradesMarket() {
+                const container = document.getElementById('upgrades-list');
+                container.innerHTML = '';
+
+                const cleanStashBalance = this.state.stash;
+
+                const list = [
+                    { key: 'slowHeat', name: 'Federal Interception Shields', desc: 'Exponentially cuts federal heat additions per incoming investor block by 8% per rank.', baseCost: 12000 },
+                    { key: 'slowPublic', name: 'Shell Media Dispersal', desc: 'Exponentially cuts public suspicion additions per incoming investor block by 8% per rank.', baseCost: 10000 },
+                    { key: 'sitBackShield', name: 'Dark Pool Liquidation Protocols', desc: 'Reduces the proportion of suspicion/heat generated during Harvest phases by 5% per rank.', baseCost: 9500 }, 
+                    { key: 'liabilityShield', name: 'Asset Liability Restructuring', desc: 'Reduces book liability scaling and compounding interest rates by 5% per rank.', baseCost: 10500 }, 
+                    { key: 'bailoutDiscount', name: 'Sovereign Legal Indemnity Funds', desc: 'Reduces the offshore cash required to bribe out of an arrest indictment by 5% per rank.', baseCost: 11000 }, 
+                    { key: 'confidence', name: 'Premium Tier Pitch (Confidence)', desc: 'Boosts deposit baseline per investor node by +$125.', baseCost: 15000 },
+                    { key: 'publicImage', name: 'Automated Funnel Optimization', desc: 'Increases customer onboarding conversion rates by +1% per level, multiplied by total current investor nodes.', baseCost: 14000 }, 
+                    { key: 'fleeDiscount', name: 'Diplomatic Immunity Subsidies', desc: 'Reduces skimmed asset flee penalties on escape costs by 5% per rank.', baseCost: 8000 }
+                ];
+
+                list.forEach(upg => {
+                    const lvl = this.state.upgrades[upg.key] || 0;
+                    const currentCost = Math.floor(upg.baseCost * Math.pow(1.5, lvl));
+                    const canAfford = cleanStashBalance >= currentCost;
+                    
+                    const div = document.createElement('div');
+                    div.className = 'upgrade-item';
+                    
+                    div.innerHTML = `
+                        <div class="upgrade-info">
+                            <h4>${upg.name} (Lvl ${lvl})</h4>
+                            <p>${upg.desc}</p>
+                        </div>
+                        <button class="btn btn-prestige" style="margin:0; padding: 6px 12px; font-size:12px;" 
+                            ${canAfford ? '' : 'disabled'} onclick="game.buyUpgrade('${upg.key}', ${currentCost})">
+                            Buy: $${currentCost.toLocaleString()}
+                        </button>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            buyUpgrade(key, cost) {
+                if (this.state.stash < cost) return;
+                this.state.stash -= cost;
+                this.state.upgrades[key] = (this.state.upgrades[key] || 0) + 1;
+                
+                const body = document.getElementById('end-body');
+                body.innerHTML = `You shifted cross-border before international warrants locked your terminal profile. <br><br>
+                <strong>Available Account Capital (Offshore):</strong> $${this.state.stash.toLocaleString()}<br><br>
+                Spend your stashed assets to secure network upgrades before launching the next system infrastructure layer:`;
+                
+                this.renderUpgradesMarket();
+                this.saveToCookies();
+                this.updateUI();
+            }
+
+            nextJurisdiction() {
+                const upgradesBackup = { ...this.state.upgrades };
+                const stashBackup = this.state.stash;
+                const jurisdictionsBackup = this.state.jurisdictions;
+
+                // Deep clone template baseline parameters
+                this.state = JSON.parse(JSON.stringify(this.defaultState));
+                
+                // Re-apply critical global persistent progress indicators
+                this.state.upgrades = upgradesBackup;
+                this.state.stash = stashBackup; 
+                this.state.stashAtStartOfRun = stashBackup; 
+                this.state.jurisdictions = jurisdictionsBackup;
+                
+                // FIXED: Explicitly force local liquidity back to exactly $150 baseline template values
+                this.state.cash = 150; 
+                this.state.heatMultiplier = 1.0; 
+
+                document.getElementById('end-screen').classList.remove('active');
+                
+                this.updateUI();
+                const logBox = document.getElementById('log-box');
+                logBox.innerHTML = '';
+                this.log('success', `Re-allocation complete. Infrastructure deployed. Local liquidity reset to baseline $150.`);
+                this.saveToCookies();
+            }
+
+            /* BASE64 PROFILE DATA IMPORTER / EXPORTER */
+            exportProfile() {
+                try {
+                    const profileData = JSON.stringify(this.state);
+                    const encodedString = btoa(encodeURIComponent(profileData).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+                        return String.fromCharCode('0x' + p1);
+                    }));
+                    
+                    const inputField = document.getElementById('sync-string');
+                    inputField.value = encodedString;
+                    inputField.select();
+                    
+                    this.log('success', 'Profile encrypted and parsed into synchronization code block below.');
+                } catch (err) {
+                    this.log('alert', 'System allocation failed during text encoding parameters compilation.');
+                }
+            }
+
+            importProfile() {
+                const inputField = document.getElementById('sync-string');
+                const rawString = inputField.value.trim();
+
+                if (!rawString) {
+                    this.log('warn', 'Data entry link empty. Paste a valid Base64 architecture sequence.');
+                    return;
+                }
+
+                try {
+                    const decodedData = decodeURIComponent(atob(rawString).split('').map((c) => {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+
+                    const loadedState = JSON.parse(decodedData);
+                    
+                    if (typeof loadedState !== 'object' || loadedState === null || loadedState.cash === undefined) {
+                        throw new Error('Malformed structure parsing failed.');
+                    }
+
+                    this.state = loadedState;
+                    this.verifyStateIntegrity();
+                    this.saveToCookies();
+                    this.updateUI();
+                    this.renderFullLog();
+
+                    this.log('success', 'Foreign network layer synchronization active. State reconstructed fully.');
+                    document.getElementById('end-screen').classList.remove('active');
+                } catch (err) {
+                    this.log('alert', 'Failed synchronization protocols. Encrypted string parameters corrupt.');
+                }
+            }
+        }
+
+        const game = new PersistentPonziEngine();
+    </script>
+</body>
+</html>
