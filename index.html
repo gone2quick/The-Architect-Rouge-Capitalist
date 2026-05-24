@@ -479,7 +479,8 @@
                 <div class="panel-title" style="margin-top: 10px;">Asset Allocation</div>
                 <div class="input-inline-group">
                     <input type="number" id="input-stash-amount" placeholder="Amount to skim" min="1">
-                    <button class="btn" style="margin: 0;" onclick="game.stashFunds()">Skim to Offshore</button>
+                    <button class="btn" style="margin: 0; flex: 1;" onclick="game.stashFunds()">Skim</button>
+                    <button class="btn btn-warning" style="margin: 0; font-size: 12px; padding: 10px 8px;" onclick="game.stashMaxSafely()">Skim Max Safely</button>
                 </div>
                 <div class="input-inline-group">
                     <input type="number" id="input-inject-amount" placeholder="Amount to deploy" min="1">
@@ -560,6 +561,38 @@
                 
                 this.state = {};
                 this.loadFromCookies();
+            }
+
+            formatValue(num) {
+                if (num === null || isNaN(num)) return "0";
+                const absoluteValue = Math.abs(num);
+                const prefixSign = num < 0 ? "-" : "";
+
+                if (absoluteValue < 1000) {
+                    return prefixSign + absoluteValue.toLocaleString(undefined, { maximumFractionDigits: 2 });
+                }
+
+                const notations = [
+                    "", "k", "m", "b", "t", "qa", "qu", "sx", "sp", "oc", "no", "dc",
+                    "udc", "ddc", "tdc", "qadc", "qudc", "sxdc", "spdc", "ocdc", "nodc", "vg",
+                    "uvg", "dvg", "tvg", "qavg", "quvg", "sxvg", "spvg", "ocvg", "novg", "tg",
+                    "utg", "dtg", "ttg", "qatg", "qutg", "sxtg", "sptg", "octg", "notg", "qd",
+                    "uqd", "dqd", "tqd", "qaqd", "quqd", "sxqd", "spqd", "ocqd", "noqd", "qi",
+                    "uqi", "dqi", "tqi", "qaqi", "quqi", "sxqi", "spqi", "ocqi", "noqi", "sx",
+                    "usx", "dsx", "tsx", "qasx", "qux", "sxsx", "spsx", "ocsx", "nosx", "sp",
+                    "usp", "dsp", "tsp", "qasp", "qusp", "sxsp", "spsp", "ocsp", "nosp", "og",
+                    "uog", "dog", "tog", "qaog", "quog", "sxog", "spog", "ocog", "noog", "nmg",
+                    "unmg", "dnmg", "tnmg", "qanmg", "qunmg", "sxnmg", "spnmg", "ocnmg", "nonmg", "cn"
+                ];
+
+                const exponentTier = Math.floor(Math.log10(absoluteValue) / 3);
+                
+                if (exponentTier >= notations.length) {
+                    return prefixSign + absoluteValue.toExponential(2);
+                }
+                
+                const standardizedValue = absoluteValue / Math.pow(10, exponentTier * 3);
+                return prefixSign + standardizedValue.toLocaleString(undefined, { maximumFractionDigits: 2 }) + notations[exponentTier];
             }
 
             loadFromCookies() {
@@ -644,8 +677,12 @@
             }
 
             getEscapeCost() {
+                return this.calculateEscapeCostForStash(this.state.stash);
+            }
+
+            calculateEscapeCostForStash(targetStash) {
                 const upgradeModifier = 1 - (this.state.upgrades.fleeDiscount * 0.05); 
-                const skimmedThisRun = Math.max(0, this.state.stash - this.state.stashAtStartOfRun);
+                const skimmedThisRun = Math.max(0, targetStash - this.state.stashAtStartOfRun);
                 const variableImpact = skimmedThisRun * 0.5;
                 const totalCost = Math.max(150, (150 + variableImpact) * Math.max(0.1, upgradeModifier));
                 return Math.floor(totalCost);
@@ -658,9 +695,9 @@
             }
 
             updateUI() {
-                document.getElementById('stat-cash').innerText = `$${this.state.cash.toLocaleString()}`;
-                document.getElementById('stat-liabilities').innerText = `$${this.state.liabilities.toLocaleString()}`;
-                document.getElementById('stat-stash').innerText = `$${this.state.stash.toLocaleString()}`;
+                document.getElementById('stat-cash').innerText = `$${this.formatValue(this.state.cash)}`;
+                document.getElementById('stat-liabilities').innerText = `$${this.formatValue(this.state.liabilities)}`;
+                document.getElementById('stat-stash').innerText = `$${this.formatValue(this.state.stash)}`;
                 document.getElementById('stat-suspicion-text').innerText = `${Math.floor(this.state.suspicion)}%`;
                 document.getElementById('stat-heat-text').innerText = `${Math.floor(this.state.heat)}%`;
                 document.getElementById('stat-days').innerText = this.state.days;
@@ -669,11 +706,11 @@
                 document.getElementById('meter-suspicion').style.width = `${this.state.suspicion}%`;
                 document.getElementById('meter-heat').style.width = `${this.state.heat}%`;
 
-                document.getElementById('sub-campaign-cost').innerText = `Cost: $${this.state.campaignCost.toLocaleString()}`;
-                document.getElementById('sub-bribe-cost').innerText = `Cost: $${this.state.bribeCost.toLocaleString()}`;
+                document.getElementById('sub-campaign-cost').innerText = `Cost: $${this.formatValue(this.state.campaignCost)}`;
+                document.getElementById('sub-bribe-cost').innerText = `Cost: $${this.formatValue(this.state.bribeCost)}`;
                 
                 const currentEscapeCost = this.getEscapeCost();
-                document.getElementById('sub-flee-cost').innerText = `Requires $${currentEscapeCost.toLocaleString()} liquid cash on hand`;
+                document.getElementById('sub-flee-cost').innerText = `Requires $${this.formatValue(currentEscapeCost)} liquid cash on hand`;
 
                 document.getElementById('btn-campaign').disabled = (this.state.cash < this.state.campaignCost);
                 document.getElementById('btn-bribe').disabled = (this.state.cash < this.state.bribeCost);
@@ -729,7 +766,7 @@
                         this.state.suspicion = Math.min(100, this.state.suspicion + 0.5);
                         this.state.heat = Math.min(100, this.state.heat + (0.5 * this.state.heatMultiplier));
                     }
-                    this.log('system', `Aggressive Expansion: ${activePayingNetwork} active pools processed. Income: +$${cashInjected.toLocaleString()}. (Recruited: +${newInvestors} nodes).`);
+                    this.log('system', `Aggressive Expansion: ${this.formatValue(activePayingNetwork)} active pools processed. Income: +$${this.formatValue(cashInjected)}. (Recruited: +${this.formatValue(newInvestors)} nodes).`);
                 } else {
                     let sitBackFactor = 0.50;
                     sitBackFactor -= (this.state.upgrades.sitBackShield * 0.05);
@@ -738,7 +775,7 @@
                     this.state.suspicion = Math.min(100, this.state.suspicion + (publicGained * sitBackFactor));
                     this.state.heat = Math.min(100, this.state.heat + (heatGained * sitBackFactor));
                     
-                    this.log('success', `Harvest Phase: Maintained current assets. Yield: +$${cashInjected.toLocaleString()}. Generated ${Math.floor(sitBackFactor * 100)}% suspicion velocity.`);
+                    this.log('success', `Harvest Phase: Maintained current assets. Yield: +$${this.formatValue(cashInjected)}. Generated ${Math.floor(sitBackFactor * 100)}% suspicion velocity.`);
                 }
 
                 this.checkRiskStates();
@@ -768,7 +805,7 @@
                 const heatReduction = 20 + Math.floor(Math.random() * 15);
                 this.state.heat = Math.max(0, this.state.heat - heatReduction);
 
-                this.log('success', `Bribe Paid: Routed $${this.state.bribeCost.toLocaleString()} to enforcement staff. Tracking file shelved (-${heatReduction}% Regulatory Heat).`);
+                this.log('success', `Bribe Paid: Routed $${this.formatValue(this.state.bribeCost)} to enforcement staff. Tracking file shelved (-${heatReduction}% Regulatory Heat).`);
                 
                 this.state.bribeCost = Math.floor(this.state.bribeCost * 2.5);
 
@@ -785,15 +822,61 @@
                     return;
                 }
 
+                this.executeStash(amount);
+                input.value = '';
+            }
+
+            stashMaxSafely() {
+                const availableLocalCash = this.state.cash;
+                if (availableLocalCash <= 0) {
+                    this.log('warn', 'Zero domestic liquid cash available to route.');
+                    return;
+                }
+
+                // Step 1: Funnel ALL local liquidity directly into offshore reserves first
+                this.state.stash += availableLocalCash;
+                this.state.cash = 0;
+
+                // Step 2: Read how much capital is now needed to cross borders from this new point
+                const exactRequiredEscapeFee = this.getEscapeCost();
+
+                // Step 3: Verify if offshore accounts can sustain the extraction fee
+                if (this.state.stash < exactRequiredEscapeFee) {
+                    // Fallback safety case: if total net worth is below the absolute border gate cost,
+                    // roll back the full initial balance to domestic accounts to avoid an inescapable soft-lock.
+                    this.state.cash = availableLocalCash;
+                    this.state.stash -= availableLocalCash;
+                    this.log('warn', `Insufficient net capital runway. You need at least $${this.formatValue(exactRequiredEscapeFee)} total across accounts to execute this shuffle.`);
+                    return;
+                }
+
+                // Step 4: Funnel exactly the required escape fee back down to local cash accounts
+                this.state.stash -= exactRequiredEscapeFee;
+                this.state.cash = exactRequiredEscapeFee;
+
+                // Step 5: Log suspicion drag impact based on the net movement out of domestic circulation
+                const netAmountSkimmed = availableLocalCash - exactRequiredEscapeFee;
+                if (netAmountSkimmed > 0) {
+                    const dragImpact = Math.min(30, (netAmountSkimmed / (this.state.cash + netAmountSkimmed)) * 65);
+                    this.state.suspicion = Math.min(100, this.state.suspicion + dragImpact);
+                }
+
+                this.log('success', `Automated Sweep Loop: Routed $${this.formatValue(availableLocalCash)} offshore, evaluated border fee, and funneled back $${this.formatValue(exactRequiredEscapeFee)} securely.`);
+                
+                this.checkRiskStates();
+                this.saveToCookies();
+                this.updateUI();
+            }
+
+            executeStash(amount) {
                 this.state.cash -= amount;
                 this.state.stash += amount;
                 
                 const dragImpact = Math.min(30, (amount / (this.state.cash + amount)) * 65);
                 this.state.suspicion = Math.min(100, this.state.suspicion + dragImpact);
 
-                this.log('warn', `Offshore Diversion: Diverted $${amount.toLocaleString()} to hidden terminal. Flee requirement adjusted dynamically.`);
+                this.log('warn', `Offshore Diversion: Diverted $${this.formatValue(amount)} to hidden terminal. Flee requirement adjusted dynamically.`);
                 
-                input.value = '';
                 this.checkRiskStates();
                 this.saveToCookies();
                 this.updateUI();
@@ -812,7 +895,7 @@
                 this.state.cash += amount;
                 this.state.suspicion = Math.max(0, this.state.suspicion - 10);
 
-                this.log('success', `Emergency Re-Injection: Remitted $${amount.toLocaleString()} back to domestic accounts to cover gaps.`);
+                this.log('success', `Emergency Re-Injection: Remitted $${this.formatValue(amount)} back to domestic accounts to cover gaps.`);
                 
                 input.value = '';
                 this.checkRiskStates();
@@ -839,11 +922,25 @@
             attemptEscape() {
                 const requiredCash = this.getEscapeCost();
                 if (this.state.cash < requiredCash) {
-                    this.log('warn', `Extraction Locked: Border asset verification requires minimum $${requiredCash.toLocaleString()} liquid cash on hand.`);
+                    this.log('warn', `Extraction Locked: Border asset verification requires minimum $${this.formatValue(requiredCash)} liquid cash on hand.`);
                     return;
                 }
 
                 this.triggerTermination('transition');
+            }
+
+            executeOffshoreBailout(cost) {
+                if (this.state.stash < cost) return;
+                this.state.stash -= cost;
+                this.state.heat = 0;
+                this.state.suspicion = 0;
+                this.state.cash = Math.max(this.state.cash, 150);
+                this.state.heatMultiplier = 1.0;
+
+                document.getElementById('end-screen').classList.remove('active');
+                this.log('success', `Bailout Executed: Remitted $${this.formatValue(cost)} from offshore reserves. Asset tracking data expunged, indictment withdrawn.`);
+                this.saveToCookies();
+                this.updateUI();
             }
 
             triggerTermination(reason) {
@@ -865,8 +962,8 @@
                     this.state.jurisdictions += 1;
 
                     body.innerHTML = `You shifted cross-border before international warrants locked your terminal profile. <br><br>
-                    <strong>Flee Cost Paid:</strong> $${escapeFee.toLocaleString()} (Deducted from local cash)<br>
-                    <strong>Available Account Capital (Offshore):</strong> $${this.state.stash.toLocaleString()}<br><br>
+                    <strong>Flee Cost Paid:</strong> $${this.formatValue(escapeFee)} (Deducted from local cash)<br>
+                    <strong>Available Account Capital (Offshore):</strong> $${this.formatValue(this.state.stash)}<br><br>
                     Spend your stashed assets to secure network upgrades before launching the next system infrastructure layer:`;
                     
                     market.style.display = "block";
@@ -887,9 +984,9 @@
                     const canAffordBailout = this.state.stash >= bailoutCost;
 
                     body.innerHTML = `The Department of Justice isolated your server routes. Your shell identities have been flagged for active interception.<br><br>
-                    <strong>Stolen Book Liabilities This Run:</strong> $${this.state.liabilities.toLocaleString()}<br>
-                    <strong>Required Offshore Bailout Amount:</strong> $${bailoutCost.toLocaleString()} <br>
-                    <strong>Your Current Offshore Wealth:</strong> $${this.state.stash.toLocaleString()}`;
+                    <strong>Stolen Book Liabilities This Run:</strong> $${this.formatValue(this.state.liabilities)}<br>
+                    <strong>Required Offshore Bailout Amount:</strong> $${this.formatValue(bailoutCost)} <br>
+                    <strong>Your Current Offshore Wealth:</strong> $${this.formatValue(this.state.stash)}`;
 
                     if (canAffordBailout) {
                         body.innerHTML += `<br><br><span style="color: var(--primary); font-weight:bold;">[LEGAL INGRESS DETECTED]</span> You possess sufficient offshore resources to secure elite defense counsel and bribe federal tracking elements out of this indictment.`;
@@ -897,7 +994,7 @@
                         const bribeBtn = document.createElement('button');
                         bribeBtn.className = "btn btn-warning";
                         bribeBtn.style.margin = "0 auto";
-                        bribeBtn.innerHTML = `<span>Deploy Offshore Bailout</span> <span class="btn-subtext">Pay $${bailoutCost.toLocaleString()}</span>`;
+                        bribeBtn.innerHTML = `<span>Deploy Offshore Bailout</span> <span class="btn-subtext">Pay $${this.formatValue(bailoutCost)}</span>`;
                         bribeBtn.onclick = () => this.executeOffshoreBailout(bailoutCost);
                         buttonsZone.appendChild(bribeBtn);
                     }
@@ -909,18 +1006,6 @@
                     resetBtn.onclick = () => this.reset();
                     buttonsZone.appendChild(resetBtn);
                 }
-            }
-
-            executeOffshoreBailout(cost) {
-                this.state.stash -= cost;
-                this.state.heat = 0; 
-                this.state.cash = 0; 
-                
-                document.getElementById('end-screen').classList.remove('active');
-                
-                this.updateUI();
-                this.log('success', `OFFSHORE BAILOUT EXECUTED: Remitted $${cost.toLocaleString()} to legal agencies and corrupt staff. Federal indictment dropped. Local cash accounts seized.`);
-                this.saveToCookies();
             }
 
             renderUpgradesMarket() {
@@ -955,7 +1040,7 @@
                         </div>
                         <button class="btn btn-prestige" style="margin:0; padding: 6px 12px; font-size:12px;" 
                             ${canAfford ? '' : 'disabled'} onclick="game.buyUpgrade('${upg.key}', ${currentCost})">
-                            Buy: $${currentCost.toLocaleString()}
+                            Buy: $${this.formatValue(currentCost)}
                         </button>
                     `;
                     container.appendChild(div);
@@ -969,7 +1054,7 @@
                 
                 const body = document.getElementById('end-body');
                 body.innerHTML = `You shifted cross-border before international warrants locked your terminal profile. <br><br>
-                <strong>Available Account Capital (Offshore):</strong> $${this.state.stash.toLocaleString()}<br><br>
+                <strong>Available Account Capital (Offshore):</strong> $${this.formatValue(this.state.stash)}<br><br>
                 Spend your stashed assets to secure network upgrades before launching the next system infrastructure layer:`;
                 
                 this.renderUpgradesMarket();
@@ -982,16 +1067,12 @@
                 const stashBackup = this.state.stash;
                 const jurisdictionsBackup = this.state.jurisdictions;
 
-                // Deep clone template baseline parameters
                 this.state = JSON.parse(JSON.stringify(this.defaultState));
                 
-                // Re-apply critical global persistent progress indicators
                 this.state.upgrades = upgradesBackup;
                 this.state.stash = stashBackup; 
                 this.state.stashAtStartOfRun = stashBackup; 
                 this.state.jurisdictions = jurisdictionsBackup;
-                
-                // FIXED: Explicitly force local liquidity back to exactly $150 baseline template values
                 this.state.cash = 150; 
                 this.state.heatMultiplier = 1.0; 
 
@@ -1004,7 +1085,6 @@
                 this.saveToCookies();
             }
 
-            /* BASE64 PROFILE DATA IMPORTER / EXPORTER */
             exportProfile() {
                 try {
                     const profileData = JSON.stringify(this.state);
